@@ -3,418 +3,762 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>University Space & IT Asset Management Dashboard</title>
+    <title>SaaS Analytics Dashboard</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-funnel"></script>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f5f7fa; color: #2c3e50; }
-        .container { display: flex; flex-direction: column; min-height: 100vh; }
-        
-         .header { padding: 20px 40px; background-color: #ffffff; box-shadow: 0 2px 4px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-         .header h1 { font-size: 24px; color: #1e3a5f; }
-         .filters { display: flex; gap: 15px; }
-         .filters select, .filters button { padding: 10px 15px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 14px; background-color: white; }
-         .filters button { background-color: #2c5aa0; color: white; cursor: pointer; transition: background-color 0.3s ease; }
-         .filters button:hover { background-color: #1e3a5f; }
-         .main-content { padding: 0 40px 40px 40px; flex-grow: 1; }
-         .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 20px; margin-bottom: 30px; }
-         .kpi-card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); border-left: 4px solid #2c5aa0; }
-         .kpi-label { font-size: 12px; color: #718096; text-transform: uppercase; margin-bottom: 8px; font-weight: 600; }
-         .kpi-value { font-size: 28px; font-weight: 700; color: #1e3a5f; }
-         .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 25px; margin-bottom: 30px; }
-         .chart-container { background: white; padding: 25px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08); }
-         .chart-title { font-size: 16px; font-weight: 700; color: #1e3a5f; margin-bottom: 20px; }
-         .chart-wrapper { position: relative; height: 300px; }
-         .export-buttons { margin-top: 10px; }
-         .export-buttons button { margin-right: 10px; padding: 8px 15px; background-color: #6c757d; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 13px; }
-         .export-buttons button:hover { background-color: #5a6268; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-         @media (max-width: 768px) {
-            .header { flex-direction: column; align-items: flex-start; gap: 15px; }
-            .filters { flex-direction: column; width: 100%; }
-            .kpi-grid { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
-            .charts-grid { grid-template-columns: 1fr; }
-            .main-content { padding: 0 20px 20px 20px; }
-         }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f7fa;
+            color: #2c3e50;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+
+        /* Sidebar Navigation */
+        .sidebar {
+            width: 260px;
+            background: linear-gradient(135deg, #1e3a5f 0%, #2c5aa0 100%);
+            color: white;
+            padding: 30px 20px;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+            overflow-y: auto;
+        }
+
+        .sidebar-header {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 40px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .sidebar-header::before {
+            content: '📊';
+            font-size: 28px;
+        }
+
+        .nav-menu {
+            list-style: none;
+        }
+
+        .nav-item {
+            margin-bottom: 15px;
+        }
+
+        .nav-link {
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            padding: 12px 15px;
+            border-radius: 8px;
+            display: block;
+            transition: all 0.3s ease;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .nav-link:hover,
+        .nav-link.active {
+            background-color: rgba(255, 255, 255, 0.15);
+            color: white;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 40px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 32px;
+            color: #1e3a5f;
+        }
+
+        .header-controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .date-filter {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .date-filter input {
+            padding: 10px 15px;
+            border: 1px solid #cbd5e0;
+            border-radius: 6px;
+            font-size: 14px;
+            background-color: white;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background-color: #2c5aa0;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #1e3a5f;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(44, 90, 160, 0.3);
+        }
+
+        .btn-secondary {
+            background-color: #e2e8f0;
+            color: #2c3e50;
+        }
+
+        .btn-secondary:hover {
+            background-color: #cbd5e0;
+        }
+
+        /* KPI Cards Grid */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .kpi-card {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            border-left: 4px solid #2c5aa0;
+            transition: all 0.3s ease;
+        }
+
+        .kpi-card:hover {
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
+            transform: translateY(-4px);
+        }
+
+        .kpi-label {
+            font-size: 12px;
+            color: #718096;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .kpi-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: #1e3a5f;
+            margin-bottom: 8px;
+        }
+
+        .kpi-change {
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .kpi-change.positive {
+            color: #22863a;
+        }
+
+        .kpi-change.negative {
+            color: #cb2431;
+        }
+
+        /* Charts Grid */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+
+        .chart-container {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .chart-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #1e3a5f;
+            margin-bottom: 20px;
+        }
+
+        .chart-wrapper {
+            position: relative;
+            height: 300px;
+        }
+
+        .funnel-container {
+            grid-column: 1 / -1;
+        }
+
+        .funnel-wrapper {
+            height: 350px;
+        }
+
+        /* Export Section */
+        .export-section {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .export-label {
+            font-size: 14px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .export-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        /* Scrollbar Styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e0;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a0aec0;
+        }
+
+        @media (max-width: 1200px) {
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                padding: 20px;
+            }
+
+            .kpi-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 20px;
+            }
+
+            .header-controls {
+                flex-direction: column;
+                width: 100%;
+            }
+
+            .date-filter {
+                flex-direction: column;
+                width: 100%;
+            }
+
+            .date-filter input {
+                width: 100%;
+            }
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <header class="header">
-            <h1>University Space & IT Asset Management</h1>
-            <div class="filters">
-                <select id="campusFilter">
-                    <option value="all">All Campuses</option>
-                </select>
-                <select id="buildingFilter">
-                    <option value="all">All Buildings</option>
-                </select>
-                <select id="departmentFilter">
-                    <option value="all">All Departments</option>
-                </select>
-                <button onclick="applyFilters()">Apply</button>
-                <div class="export-buttons">
-                     <button onclick="exportCSV()">Export to CSV</button>
-                     <button onclick="exportPDF()">Export to PDF</button>
-                 </div>
-            </div>
-        </header>
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">Analytics</div>
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a href="#" class="nav-link active">📈 Dashboard</a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link">👥 Customers</a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link">💰 Revenue</a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link">🔄 Churn Analysis</a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link">🎯 Conversion</a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link">📊 Reports</a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link">⚙️ Settings</a>
+                </li>
+            </ul>
+        </aside>
 
+        <!-- Main Content -->
         <main class="main-content">
+            <!-- Header -->
+            <div class="header">
+                <h1>Dashboard</h1>
+                <div class="header-controls">
+                    <div class="date-filter">
+                        <label for="startDate" style="font-size: 14px; font-weight: 600;">Date Range:</label>
+                        <input type="date" id="startDate" value="2024-10-17">
+                        <span style="color: #718096;">to</span>
+                        <input type="date" id="endDate" value="2025-10-17">
+                        <button class="btn btn-primary" onclick="updateDashboard()">Apply</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- KPI Cards -->
             <div class="kpi-grid">
                 <div class="kpi-card">
-                    <div class="kpi-label">Overall Space Utilization</div>
-                    <div class="kpi-value" id="kpiUtil">--%</div>
+                    <div class="kpi-label">Monthly Recurring Revenue</div>
+                    <div class="kpi-value">$487.5K</div>
+                    <div class="kpi-change positive">↑ 12.5% vs last month</div>
                 </div>
-                 <div class="kpi-card">
-                    <div class="kpi-label">Total University Space</div>
-                    <div class="kpi-value" id="kpiTotalSpace">--M sq ft</div>
+
+                <div class="kpi-card">
+                    <div class="kpi-label">MRR Growth Rate</div>
+                    <div class="kpi-value">12.5%</div>
+                    <div class="kpi-change positive">↑ 2.1% acceleration</div>
                 </div>
-                 <div class="kpi-card">
-                    <div class="kpi-label">Average Cost per Sq. Ft.</div>
-                    <div class="kpi-value" id="kpiCostSqFt">$--.--</div>
+
+                <div class="kpi-card">
+                    <div class="kpi-label">Trial-to-Paid Conversion</div>
+                    <div class="kpi-value">28.4%</div>
+                    <div class="kpi-change positive">↑ 3.2% vs last quarter</div>
                 </div>
-                 <div class="kpi-card">
-                    <div class="kpi-label">Total Software License Spend</div>
-                    <div class="kpi-value" id="kpiLicenseSpend">$--M</div>
+
+                <div class="kpi-card">
+                    <div class="kpi-label">Customer Churn Rate</div>
+                    <div class="kpi-value">4.2%</div>
+                    <div class="kpi-change negative">↓ -0.8% (worse)</div>
                 </div>
-                 <div class="kpi-card">
-                    <div class="kpi-label">Overall License Utilization</div>
-                    <div class="kpi-value" id="kpiLicenseUtil">--%</div>
+
+                <div class="kpi-card">
+                    <div class="kpi-label">Customer Acquisition Cost</div>
+                    <div class="kpi-value">$1,250</div>
+                    <div class="kpi-change negative">↑ 5.3% vs last month</div>
                 </div>
-                 <div class="kpi-card">
-                    <div class="kpi-label">Empty/Vacant Offices</div>
-                    <div class="kpi-value" id="kpiVacant">--</div>
+
+                <div class="kpi-card">
+                    <div class="kpi-label">Customer Lifetime Value</div>
+                    <div class="kpi-value">$42,850</div>
+                    <div class="kpi-change positive">↑ 8.7% vs last quarter</div>
+                </div>
+
+                <div class="kpi-card">
+                    <div class="kpi-label">DAU/MAU Ratio (Stickiness)</div>
+                    <div class="kpi-value">42.3%</div>
+                    <div class="kpi-change positive">↑ 2.1% vs last month</div>
                 </div>
             </div>
 
+            <!-- Charts -->
             <div class="charts-grid">
+                <!-- MRR Growth Chart -->
                 <div class="chart-container">
-                    <div class="chart-title">Space Allocation by Type</div>
+                    <div class="chart-title">MRR Growth Trend (12 Months)</div>
                     <div class="chart-wrapper">
-                        <canvas id="spaceTypeChart"></canvas>
+                        <canvas id="mrrChart"></canvas>
                     </div>
                 </div>
+
+                <!-- Churn Rate Chart -->
                 <div class="chart-container">
-                    <div class="chart-title">Space Utilization by Department</div>
+                    <div class="chart-title">Customer Churn Rate Trend</div>
                     <div class="chart-wrapper">
-                        <canvas id="deptUtilChart"></canvas>
+                        <canvas id="churnChart"></canvas>
                     </div>
                 </div>
+
+                <!-- DAU/MAU Chart -->
                 <div class="chart-container">
-                    <div class="chart-title">Building Occupancy Rates</div>
+                    <div class="chart-title">DAU/MAU Ratio (Stickiness)</div>
                     <div class="chart-wrapper">
-                        <canvas id="buildingOccupancyChart"></canvas>
+                        <canvas id="stickinessChart"></canvas>
                     </div>
                 </div>
-                 <div class="chart-container">
-                    <div class="chart-title">Software Licenses: Used vs. Purchased</div>
+
+                <!-- New MRR by Plan -->
+                <div class="chart-container">
+                    <div class="chart-title">New MRR by Subscription Plan</div>
                     <div class="chart-wrapper">
-                        <canvas id="licenseCompareChart"></canvas>
+                        <canvas id="planChart"></canvas>
                     </div>
                 </div>
-                 <div class="chart-container">
-                    <div class="chart-title">Software Spend by Department</div>
+
+                <!-- CAC by Channel -->
+                <div class="chart-container">
+                    <div class="chart-title">Customer Acquisition Cost by Channel</div>
                     <div class="chart-wrapper">
-                        <canvas id="softwareSpendChart"></canvas>
+                        <canvas id="cacChart"></canvas>
                     </div>
                 </div>
-                 <div class="chart-container">
-                    <div class="chart-title">Occupancy Rate Trend (Last 12 Months)</div>
-                    <div class="chart-wrapper">
-                        <canvas id="occupancyTrendChart"></canvas>
+
+                <!-- Conversion Funnel -->
+                <div class="chart-container funnel-container">
+                    <div class="chart-title">Trial-to-Paid Conversion Funnel</div>
+                    <div class="chart-wrapper funnel-wrapper">
+                        <canvas id="funnelChart"></canvas>
                     </div>
+                </div>
+            </div>
+
+            <!-- Export Section -->
+            <div class="export-section">
+                <span class="export-label">Export Dashboard Data</span>
+                <div class="export-buttons">
+                    <button class="btn btn-secondary" onclick="exportCSV()">📥 Export CSV</button>
+                    <button class="btn btn-secondary" onclick="exportPDF()">📄 Export PDF</button>
                 </div>
             </div>
         </main>
     </div>
 
     <script>
-        // --- Mock Data ---
+        // Chart color scheme
+        const primaryColor = '#2c5aa0';
+        const secondaryColor = '#64b5f6';
+        const accentColor = '#1e3a5f';
+        const gridColor = '#e2e8f0';
+
+        // Mock Data
         const mockData = {
-          "campuses": [
-            { "name": "Main Campus", "buildings": ["Library", "Science Hall", "Admin Building", "Student Center", "Engineering Building"] },
-            { "name": "Health Sciences Campus", "buildings": ["Medical School", "Research Center", "Clinical Building", "Wellness Center"] },
-            { "name": "Downtown Campus", "buildings": ["Downtown Office", "Conference Center", "Training Facility"] }
-          ],
-          "departments": ["OIT", "Arts & Sciences", "Finance", "Engineering", "Health Sciences", "Business"],
-          "spaceTypes": ["Office", "Classroom", "Lab", "Common Area", "Storage"],
-          "buildings": [
-            { "name": "Library", "campus": "Main Campus", "occupancy": 92, "sqft": 450000, "department": "Arts & Sciences" },
-            { "name": "Science Hall", "campus": "Main Campus", "occupancy": 88, "sqft": 380000, "department": "Engineering" },
-            { "name": "Admin Building", "campus": "Main Campus", "occupancy": 75, "sqft": 250000, "department": "Finance" },
-            { "name": "Student Center", "campus": "Main Campus", "occupancy": 85, "sqft": 320000, "department": "OIT" },
-            { "name": "Engineering Building", "campus": "Main Campus", "occupancy": 82, "sqft": 420000, "department": "Engineering" },
-            { "name": "Medical School", "campus": "Health Sciences Campus", "occupancy": 91, "sqft": 520000, "department": "Health Sciences" },
-            { "name": "Research Center", "campus": "Health Sciences Campus", "occupancy": 78, "sqft": 380000, "department": "Engineering" },
-            { "name": "Clinical Building", "campus": "Health Sciences Campus", "occupancy": 89, "sqft": 450000, "department": "Health Sciences" },
-            { "name": "Wellness Center", "campus": "Health Sciences Campus", "occupancy": 72, "sqft": 200000, "department": "Health Sciences" },
-            { "name": "Downtown Office", "campus": "Downtown Campus", "occupancy": 68, "sqft": 180000, "department": "Finance" },
-            { "name": "Conference Center", "campus": "Downtown Campus", "occupancy": 76, "sqft": 220000, "department": "Business" },
-            { "name": "Training Facility", "campus": "Downtown Campus", "occupancy": 71, "sqft": 150000, "department": "OIT" }
-          ],
-          "departmentUtilization": [
-            { "name": "Arts & Sciences", "utilization": 82 }, { "name": "Engineering", "utilization": 85 }, { "name": "Health Sciences", "utilization": 88 },
-            { "name": "Finance", "utilization": 72 }, { "name": "OIT", "utilization": 79 }, { "name": "Business", "utilization": 76 },
-            { "name": "Student Services", "utilization": 81 }, { "name": "Facilities", "utilization": 68 }, { "name": "HR", "utilization": 74 }, { "name": "Research", "utilization": 86 }
-          ],
-          "softwareLicenses": [
-            { "name": "Microsoft Office 365", "purchased": 5000, "active": 4200 }, { "name": "Adobe Creative Suite", "purchased": 800, "active": 650 },
-            { "name": "Salesforce", "purchased": 300, "active": 280 }, { "name": "Tableau", "purchased": 150, "active": 135 },
-            { "name": "AutoCAD", "purchased": 200, "active": 180 }, { "name": "MATLAB", "purchased": 250, "active": 220 },
-            { "name": "Slack", "purchased": 2000, "active": 1850 }, { "name": "Zoom", "purchased": 3000, "active": 2900 },
-            { "name": "Citrix", "purchased": 400, "active": 350 }, { "name": "Antivirus Suite", "purchased": 6000, "active": 5800 }
-          ],
-          "softwareSpendByDept": [
-            { "department": "OIT", "spend": 450000 }, { "department": "Engineering", "spend": 380000 }, { "department": "Health Sciences", "spend": 320000 },
-            { "department": "Arts & Sciences", "spend": 280000 }, { "department": "Finance", "spend": 250000 }, { "department": "Business", "spend": 180000 },
-            { "department": "Research", "spend": 160000 }, { "department": "Student Services", "spend": 120000 }
-          ],
-          "occupancyTrend": [
-            { "month": "Nov 2024", "rate": 72 }, { "month": "Dec 2024", "rate": 68 }, { "month": "Jan 2025", "rate": 70 },
-            { "month": "Feb 2025", "rate": 73 }, { "month": "Mar 2025", "rate": 75 }, { "month": "Apr 2025", "rate": 76 },
-            { "month": "May 2025", "rate": 77 }, { "month": "Jun 2025", "rate": 78 }, { "month": "Jul 2025", "rate": 79 },
-            { "month": "Aug 2025", "rate": 77 }, { "month": "Sep 2025", "rate": 78 }, { "month": "Oct 2025", "rate": 78 }
-          ]
+            months: ['Nov 2024', 'Dec 2024', 'Jan 2025', 'Feb 2025', 'Mar 2025', 'Apr 2025', 'May 2025', 'Jun 2025', 'Jul 2025', 'Aug 2025', 'Sep 2025', 'Oct 2025'],
+            mrr: [432.5, 445.2, 458.7, 472.1, 485.3, 487.5, 492.1, 498.5, 505.2, 512.8, 520.1, 487.5],
+            churnRate: [5.2, 5.0, 4.8, 4.6, 4.5, 4.3, 4.2, 4.1, 4.0, 4.1, 4.2, 4.2],
+            stickiness: [38.2, 38.9, 39.5, 40.1, 40.8, 41.2, 41.8, 42.1, 42.5, 42.8, 42.6, 42.3],
+            planMRR: {
+                labels: ['Starter', 'Professional', 'Enterprise'],
+                data: [125.3, 215.8, 146.4]
+            },
+            cacByChannel: {
+                labels: ['Organic', 'Paid Search', 'Social Media', 'Referral', 'Direct'],
+                data: [450, 1250, 980, 650, 320]
+            },
+            funnel: {
+                labels: ['Signups', 'Trial Active', 'Trial Completed', 'Paid Conversion'],
+                data: [2500, 1850, 1200, 340]
+            }
         };
 
-        // --- Chart Variables (Global Scope) ---
-        let spaceTypeChart, deptUtilChart, buildingOccupancyChart, licenseCompareChart, softwareSpendChart, occupancyTrendChart;
-        let originalData; // To store the initial full dataset
-
-         // --- Chart Initialization Function ---
-         function initCharts(data) {
-             const ctxSpaceType = document.getElementById('spaceTypeChart').getContext('2d');
-             const ctxDeptUtil = document.getElementById('deptUtilChart').getContext('2d');
-             const ctxBuildingOccupancy = document.getElementById('buildingOccupancyChart').getContext('2d');
-             const ctxLicenseCompare = document.getElementById('licenseCompareChart').getContext('2d');
-             const ctxSoftwareSpend = document.getElementById('softwareSpendChart').getContext('2d');
-             const ctxOccupancyTrend = document.getElementById('occupancyTrendChart').getContext('2d');
-
-             // Destroy existing charts if they exist
-             if (spaceTypeChart) spaceTypeChart.destroy();
-             if (deptUtilChart) deptUtilChart.destroy();
-             if (buildingOccupancyChart) buildingOccupancyChart.destroy();
-             if (licenseCompareChart) licenseCompareChart.destroy();
-             if (softwareSpendChart) softwareSpendChart.destroy();
-             if (occupancyTrendChart) occupancyTrendChart.destroy();
-
-             // --- Calculate Data for Charts ---
-             // Space Type (Donut)
-            const spaceTypeCounts = data.spaceTypes.reduce((acc, type) => {
-                 acc[type] = (acc[type] || 0) + Math.random() * 100000;
-                 return acc;
-            }, {});
-
-             spaceTypeChart = new Chart(ctxSpaceType, {
-                 type: 'doughnut',
-                 data: {
-                     labels: Object.keys(spaceTypeCounts),
-                     datasets: [{
-                         label: 'Space Allocation',
-                         data: Object.values(spaceTypeCounts),
-                         backgroundColor: ['#2c5aa0', '#64b5f6', '#90caf9', '#1e88e5', '#bbdefb'],
-                     }]
-                 },
-                  options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
-             });
-
-             // Department Utilization (Bar)
-             const deptUtilData = data.departmentUtilization.sort((a,b) => b.utilization - a.utilization).slice(0, 10);
-             const deptUtilLabels = deptUtilData.map(d => d.name);
-             const deptUtilValues = deptUtilData.map(d => d.utilization);
-             deptUtilChart = new Chart(ctxDeptUtil, {
-                 type: 'bar',
-                 data: {
-                     labels: deptUtilLabels,
-                     datasets: [{
-                         label: 'Utilization %',
-                         data: deptUtilValues,
-                         backgroundColor: '#64b5f6',
-                         borderRadius: 4,
-                     }]
-                 },
-                 options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, max: 100 } } }
-             });
-
-              // Building Occupancy (Bar)
-             const sortedBuildings = [...data.buildings].sort((a, b) => b.occupancy - a.occupancy);
-             const topBuildings = sortedBuildings.slice(0, 5);
-             const bottomBuildings = sortedBuildings.slice(-5).reverse(); 
-             const buildingLabels = [...topBuildings.map(b => b.name), ...bottomBuildings.map(b => b.name)];
-             const buildingValues = [...topBuildings.map(b => b.occupancy), ...bottomBuildings.map(b => b.occupancy)];
-             const buildingColors = [...topBuildings.map(() => '#27ae60'), ...bottomBuildings.map(() => '#e74c3c')]; 
-
-             buildingOccupancyChart = new Chart(ctxBuildingOccupancy, {
-                 type: 'bar',
-                 data: {
-                     labels: buildingLabels,
-                     datasets: [{
-                         label: 'Occupancy %',
-                         data: buildingValues,
-                         backgroundColor: buildingColors,
-                         borderRadius: 4,
-                     }]
-                 },
-                 options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, max: 100 } } }
-             });
-
-             // License Comparison (Bar)
-             const licenseLabels = data.softwareLicenses.map(s => s.name);
-             const purchasedValues = data.softwareLicenses.map(s => s.purchased);
-             const activeValues = data.softwareLicenses.map(s => s.active);
-
-             licenseCompareChart = new Chart(ctxLicenseCompare, {
-                 type: 'bar',
-                 data: {
-                     labels: licenseLabels,
-                     datasets: [
-                         { label: 'Purchased', data: purchasedValues, backgroundColor: '#90caf9', borderRadius: 4 },
-                         { label: 'Active', data: activeValues, backgroundColor: '#2c5aa0', borderRadius: 4 }
-                     ]
-                 },
-                 options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
-             });
-
-              // Software Spend by Dept (Bar)
-             const spendData = data.softwareSpendByDept.sort((a,b) => b.spend - a.spend);
-             const spendLabels = spendData.map(s => s.department);
-             const spendValues = spendData.map(s => s.spend);
-             softwareSpendChart = new Chart(ctxSoftwareSpend, {
-                 type: 'bar',
-                 data: {
-                     labels: spendLabels,
-                     datasets: [{
-                         label: 'Spend ($)',
-                         data: spendValues,
-                         backgroundColor: '#1e88e5',
-                         borderRadius: 4,
-                     }]
-                 },
-                  options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
-             });
-
-             // Occupancy Trend (Line)
-             const trendLabels = data.occupancyTrend.map(t => t.month);
-             const trendValues = data.occupancyTrend.map(t => t.rate);
-             occupancyTrendChart = new Chart(ctxOccupancyTrend, {
-                 type: 'line',
-                 data: {
-                     labels: trendLabels,
-                     datasets: [{
-                         label: 'Occupancy Rate %',
-                         data: trendValues,
-                         borderColor: '#2c5aa0',
-                         tension: 0.1,
-                         fill: false
-                     }]
-                 },
-                 options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: false } } }
-             });
-         }
-
-        // --- Populate Filters ---
-        function populateFilters(data) {
-            const campusFilter = document.getElementById('campusFilter');
-            const buildingFilter = document.getElementById('buildingFilter');
-            const deptFilter = document.getElementById('departmentFilter');
-
-            campusFilter.length = 1;
-            buildingFilter.length = 1;
-            deptFilter.length = 1;
-
-            data.campuses.forEach(campus => {
-                const option = document.createElement('option');
-                option.value = campus.name;
-                option.textContent = campus.name;
-                campusFilter.appendChild(option);
+        // Initialize Charts
+        function initCharts() {
+            // MRR Growth Chart
+            new Chart(document.getElementById('mrrChart'), {
+                type: 'line',
+                data: {
+                    labels: mockData.months,
+                    datasets: [{
+                        label: 'MRR ($K)',
+                        data: mockData.mrr,
+                        borderColor: primaryColor,
+                        backgroundColor: 'rgba(44, 90, 160, 0.05)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 5,
+                        pointBackgroundColor: primaryColor,
+                        pointBorderColor: 'white',
+                        pointBorderWidth: 2,
+                        pointHoverRadius: 7
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            labels: { font: { size: 12, weight: 600 }, color: accentColor }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            grid: { color: gridColor },
+                            ticks: { color: '#718096', font: { size: 11 } }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: '#718096', font: { size: 11 } }
+                        }
+                    }
+                }
             });
 
-             const uniqueBuildings = [...new Set(data.buildings.map(b => b.name))];
-             uniqueBuildings.sort().forEach(buildingName => {
-                 const option = document.createElement('option');
-                 option.value = buildingName;
-                 option.textContent = buildingName;
-                 buildingFilter.appendChild(option);
-             });
+            // Churn Rate Chart
+            new Chart(document.getElementById('churnChart'), {
+                type: 'line',
+                data: {
+                    labels: mockData.months,
+                    datasets: [{
+                        label: 'Churn Rate (%)',
+                        data: mockData.churnRate,
+                        borderColor: '#e74c3c',
+                        backgroundColor: 'rgba(231, 76, 60, 0.05)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 5,
+                        pointBackgroundColor: '#e74c3c',
+                        pointBorderColor: 'white',
+                        pointBorderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            labels: { font: { size: 12, weight: 600 }, color: accentColor }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 6,
+                            grid: { color: gridColor },
+                            ticks: { color: '#718096', font: { size: 11 } }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: '#718096', font: { size: 11 } }
+                        }
+                    }
+                }
+            });
 
-            data.departments.sort().forEach(dept => {
-                const option = document.createElement('option');
-                option.value = dept;
-                option.textContent = dept;
-                deptFilter.appendChild(option);
+            // Stickiness Chart
+            new Chart(document.getElementById('stickinessChart'), {
+                type: 'line',
+                data: {
+                    labels: mockData.months,
+                    datasets: [{
+                        label: 'DAU/MAU Ratio (%)',
+                        data: mockData.stickiness,
+                        borderColor: '#27ae60',
+                        backgroundColor: 'rgba(39, 174, 96, 0.05)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 5,
+                        pointBackgroundColor: '#27ae60',
+                        pointBorderColor: 'white',
+                        pointBorderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            labels: { font: { size: 12, weight: 600 }, color: accentColor }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            grid: { color: gridColor },
+                            ticks: { color: '#718096', font: { size: 11 } }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: '#718096', font: { size: 11 } }
+                        }
+                    }
+                }
+            });
+
+            // New MRR by Plan
+            new Chart(document.getElementById('planChart'), {
+                type: 'bar',
+                data: {
+                    labels: mockData.planMRR.labels,
+                    datasets: [{
+                        label: 'New MRR ($K)',
+                        data: mockData.planMRR.data,
+                        backgroundColor: [primaryColor, secondaryColor, '#90caf9'],
+                        borderRadius: 6,
+                        borderSkipped: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'x',
+                    plugins: {
+                        legend: {
+                            display: true,
+                            labels: { font: { size: 12, weight: 600 }, color: accentColor }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: gridColor },
+                            ticks: { color: '#718096', font: { size: 11 } }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: '#718096', font: { size: 11 } }
+                        }
+                    }
+                }
+            });
+
+            // CAC by Channel
+            new Chart(document.getElementById('cacChart'), {
+                type: 'bar',
+                data: {
+                    labels: mockData.cacByChannel.labels,
+                    datasets: [{
+                        label: 'CAC ($)',
+                        data: mockData.cacByChannel.data,
+                        backgroundColor: [primaryColor, secondaryColor, '#90caf9', '#64b5f6', '#42a5f5'],
+                        borderRadius: 6,
+                        borderSkipped: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'x',
+                    plugins: {
+                        legend: {
+                            display: true,
+                            labels: { font: { size: 12, weight: 600 }, color: accentColor }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: gridColor },
+                            ticks: { color: '#718096', font: { size: 11 } }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: '#718096', font: { size: 11 } }
+                        }
+                    }
+                }
+            });
+
+            // Conversion Funnel
+            new Chart(document.getElementById('funnelChart'), {
+                type: 'bar',
+                data: {
+                    labels: mockData.funnel.labels,
+                    datasets: [{
+                        label: 'Count',
+                        data: mockData.funnel.data,
+                        backgroundColor: [primaryColor, secondaryColor, '#90caf9', '#64b5f6'],
+                        borderRadius: 6,
+                        borderSkipped: false
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            labels: { font: { size: 12, weight: 600 }, color: accentColor }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            grid: { color: gridColor },
+                            ticks: { color: '#718096', font: { size: 11 } }
+                        },
+                        y: {
+                            grid: { display: false },
+                            ticks: { color: '#718096', font: { size: 11 } }
+                        }
+                    }
+                }
             });
         }
 
-         // --- Update KPIs ---
-         function updateKPIs(data) {
-             const totalSqft = data.buildings.reduce((sum, b) => sum + b.sqft, 0);
-             const avgOccupancy = data.buildings.length > 0 ? data.buildings.reduce((sum, b) => sum + b.occupancy, 0) / data.buildings.length : 0;
-             const totalLicensesPurchased = data.softwareLicenses.reduce((sum, s) => sum + s.purchased, 0);
-             const totalLicensesActive = data.softwareLicenses.reduce((sum, s) => sum + s.active, 0);
-             const licenseUtil = totalLicensesPurchased > 0 ? (totalLicensesActive / totalLicensesPurchased) * 100 : 0;
-             const totalSpend = data.softwareSpendByDept.reduce((sum, s) => sum + s.spend, 0);
-             const vacantOffices = data.buildings.filter(b => b.occupancy < 70).length; // Example: count buildings < 70% occupancy
-             const avgCostSqFt = totalSqft > 0 ? (totalSpend / (totalSqft * 0.1)) : 42.50; 
-
-
-             document.getElementById('kpiUtil').textContent = `${avgOccupancy.toFixed(1)}%`;
-             document.getElementById('kpiTotalSpace').textContent = `${(totalSqft / 1000000).toFixed(1)}M sq ft`;
-             document.getElementById('kpiCostSqFt').textContent = `$${avgCostSqFt.toFixed(2)}`;
-             document.getElementById('kpiLicenseSpend').textContent = `$${(totalSpend / 1000000).toFixed(1)}M`;
-             document.getElementById('kpiLicenseUtil').textContent = `${licenseUtil.toFixed(1)}%`;
-             document.getElementById('kpiVacant').textContent = vacantOffices;
-         }
-
-
-        // --- Apply Filters ---
-        function applyFilters() {
-            const selectedCampus = document.getElementById('campusFilter').value;
-            const selectedBuilding = document.getElementById('buildingFilter').value;
-            const selectedDept = document.getElementById('departmentFilter').value;
-
-            let filteredData = { 
-                ...originalData,
-                buildings: [...originalData.buildings],
-                departmentUtilization: [...originalData.departmentUtilization],
-                softwareSpendByDept: [...originalData.softwareSpendByDept],
-                softwareLicenses: [...originalData.softwareLicenses]
-             }; 
-
-            if (selectedCampus !== 'all') {
-                filteredData.buildings = filteredData.buildings.filter(b => b.campus === selectedCampus);
-            }
-            if (selectedBuilding !== 'all') {
-                filteredData.buildings = filteredData.buildings.filter(b => b.name === selectedBuilding);
-            }
-            if (selectedDept !== 'all') {
-                filteredData.buildings = filteredData.buildings.filter(b => b.department === selectedDept);
-                filteredData.departmentUtilization = filteredData.departmentUtilization.filter(d => d.name === selectedDept);
-                filteredData.softwareSpendByDept = filteredData.softwareSpendByDept.filter(s => s.department === selectedDept);
-            }
-
-            updateKPIs(filteredData);
-I         initCharts(filteredData);
+        // Update Dashboard
+        function updateDashboard() {
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            alert(`Dashboard updated for range: ${startDate} to ${endDate}`);
+            // In a real app, this would fetch new data from the backend
         }
 
-
-        // --- Export Functions ---
+        // Export CSV
         function exportCSV() {
-            alert('CSV export functionality would be implemented here.');
+            const csv = 'Metric,Value,Change\nMRR,$487.5K,+12.5%\nMRR Growth,12.5%,+2.1%\nConversion Rate,28.4%,+3.2%\nChurn Rate,4.2%,-0.8%\nCAC,$1250,+5.3%\nCLV,$42850,+8.7%\nStickiness,42.3%,+2.1%';
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'dashboard-export.csv';
+            a.click();
         }
 
+        // Export PDF
         function exportPDF() {
-            alert('PDF export functionality (using jsPDF or html2pdf) would be implemented here.');
+            alert('PDF export functionality would integrate with a library like jsPDF or html2pdf in production.');
+            // In production: use html2pdf or similar library
         }
 
-        // --- Initial Load ---
-        document.addEventListener('DOMContentLoaded', () => {
-             originalData = JSON.parse(JSON.stringify(mockData)); 
-             populateFilters(originalData);
-             updateKPIs(originalData);
-             initCharts(originalData);
-        });
-
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', initCharts);
     </script>
 </body>
 </html>
