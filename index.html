@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SaaS Analytics Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-funnel"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f7fa;
+            color: #2c3e50;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+
+        /* Sidebar Navigation */
+        .sidebar {
+            width: 260px;
+            background: linear-gradient(135deg, #1e3a5f 0%, #2c5aa0 100%);
+            color: white;
+            padding: 30px 20px;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+            overflow-y: auto;
+        }
+
+        .sidebar-header {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 40px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .sidebar-header::before {
+            content: '📊';
+            font-size: 28px;
+        }
+
+        .nav-menu {
+            list-style: none;
+        }
+
+        .nav-item {
+            margin-bottom: 15px;
+        }
+
+        .nav-link {
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            padding: 12px 15px;
+            border-radius: 8px;
+            display: block;
+            transition: all 0.3s ease;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .nav-link:hover,
+        .nav-link.active {
+            background-color: rgba(255, 255, 255, 0.15);
+            color: white;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 40px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 32px;
+            color: #1e3a5f;
+        }
+
+        .header-controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .date-filter {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .date-filter input {
+            padding: 10px 15px;
+            border: 1px solid #cbd5e0;
+            border-radius: 6px;
+            font-size: 14px;
+            background-color: white;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background-color: #2c5aa0;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #1e3a5f;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(44, 90, 160, 0.3);
+        }
+
+        .btn-secondary {
+            background-color: #e2e8f0;
+            color: #2c3e50;
+        }
+
+        .btn-secondary:hover {
+            background-color: #cbd5e0;
+        }
+
+        /* KPI Cards Grid */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .kpi-card {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            border-left: 4px solid #2c5aa0;
+            transition: all 0.3s ease;
+        }
+
+        .kpi-card:hover {
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
+            transform: translateY(-4px);
+        }
+
+        .kpi-label {
+            font-size: 12px;
+            color: #718096;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .kpi-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: #1e3a5f;
+            margin-bottom: 8px;
+        }
+
+        .kpi-change {
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .kpi-change.positive {
+            color: #22863a;
+        }
+
+        .kpi-change.negative {
+            color: #cb2431;
+        }
+
+        /* Charts Grid */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+
+        .chart-container {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .chart-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #1e3a5f;
+            margin-bottom: 20px;
+        }
+
+        .chart-wrapper {
+            position: relative;
+            height: 300px;
+        }
+
+        .funnel-container {
+            grid-column: 1 / -1;
+        }
+
+        .funnel-wrapper {
+            height: 350px;
+        }
+
+        /* Export Section */
+        .export-section {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .export-label {
+            font-size: 14px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .export-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        /* Scrollbar Styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e0;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a0aec0;
+        }
+
+        @media (max-width: 1200px) {
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                padding: 20px;
+            }
+
+            .kpi-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 20px;
+            }
+
+            .header-controls {
+                flex-direction: column;
+                width: 100%;
+            }
+
+            .date-filter {
+                flex-direction: column;
+                width: 100%;
+            }
+
+            .date-filter input {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">Analytics</div>
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a href="#" class="nav-link active">📈 Dashboard</a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link">👥 Customers</a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link">💰 Revenue</a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link">🔄 Churn Analysis</a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link">🎯 Conversion</a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link">📊 Reports</a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link">⚙️ Settings</a>
+                </li>
+            </ul>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <div class="header">
+                <h1>Dashboard</h1>
+                <div class="header-controls">
+                    <div class="date-filter">
+                        <label for="startDate" style="font-size: 14px; font-weight: 600;">Date Range:</label>
+                        <input type="date" id="startDate" value="2024-10-17">
+                        <span style="color: #718096;">to</span>
+                        <input type="date" id="endDate" value="2025-10-17">
+                        <button class="btn btn-primary" onclick="updateDashboard()">Apply</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- KPI Cards -->
+            <div class="kpi-grid">
+                <div class="kpi-card">
+                    <div class="kpi-label">Monthly Recurring Revenue</div>
+                    <div class="kpi-value">$487.5K</div>
+                    <div class="kpi-change positive">↑ 12.5% vs last month</div>
+                </div>
+
+                <div class="kpi-card">
+                    <div class="kpi-label">MRR Growth Rate</div>
+                    <div class="kpi-value">12.5%</div>
+                    <div class="kpi-change positive">↑ 2.1% acceleration</div>
+                </div>
+
+                <div class="kpi-card">
+                    <div class="kpi-label">Trial-to-Paid Conversion</div>
+                    <div class="kpi-value">28.4%</div>
+                    <div class="kpi-change positive">↑ 3.2% vs last quarter</div>
+                </div>
+
+                <div class="kpi-card">
+                    <div class="kpi-label">Customer Churn Rate</div>
+                    <div class="kpi-value">4.2%</div>
+                    <div class="kpi-change negative">↓ -0.8% (worse)</div>
+                </div>
+
+                <div class="kpi-card">
+                    <div class="kpi-label">Customer Acquisition Cost</div>
+                    <div class="kpi-value">$1,250</div>
+                    <div class="kpi-change negative">↑ 5.3% vs last month</div>
+                </div>
+
+                <div class="kpi-card">
+                    <div class="kpi-label">Customer Lifetime Value</div>
+                    <div class="kpi-value">$42,850</div>
+                    <div class="kpi-change positive">↑ 8.7% vs last quarter</div>
+                </div>
+
+                <div class="kpi-card">
+                    <div class="kpi-label">DAU/MAU Ratio (Stickiness)</div>
+                    <div class="kpi-value">42.3%</div>
+                    <div class="kpi-change positive">↑ 2.1% vs last month</div>
+                </div>
+            </div>
+
+            <!-- Charts -->
+            <div class="charts-grid">
+                <!-- MRR Growth Chart -->
+                <div class="chart-container">
+                    <div class="chart-title">MRR Growth Trend (12 Months)</div>
+                    <div class="chart-wrapper">
+                        <canvas id="mrrChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Churn Rate Chart -->
+                <div class="chart-container">
+                    <div class="chart-title">Customer Churn Rate Trend</div>
+                    <div class="chart-wrapper">
+                        <canvas id="churnChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- DAU/MAU Chart -->
+                <div class="chart-container">
+                    <div class="chart-title">DAU/MAU Ratio (Stickiness)</div>
+                    <div class="chart-wrapper">
+                        <canvas id="stickinessChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- New MRR by Plan -->
+                <div class="chart-container">
+                    <div class="chart-title">New MRR by Subscription Plan</div>
+                    <div class="chart-wrapper">
+                        <canvas id="planChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- CAC by Channel -->
+                <div class="chart-container">
+                    <div class="chart-title">Customer Acquisition Cost by Channel</div>
+                    <div class="chart-wrapper">
+                        <canvas id="cacChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Conversion Funnel -->
+                <div class="chart-container funnel-container">
+                    <div class="chart-title">Trial-to-Paid Conversion Funnel</div>
+                    <div class="chart-wrapper funnel-wrapper">
+                        <canvas id="funnelChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Export Section -->
+            <div class="export-section">
+                <span class="export-label">Export Dashboard Data</span>
+                <div class="export-buttons">
+                    <button class="btn btn-secondary" onclick="exportCSV()">📥 Export CSV</button>
+                    <button class="btn btn-secondary" onclick="exportPDF()">📄 Export PDF</button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Chart color scheme
+        const primaryColor = '#2c5aa0';
+        const secondaryColor = '#64b5f6';
+        const accentColor = '#1e3a5f';
+        const gridColor = '#e2e8f0';
+
+        // Mock Data
+        const mockData = {
+            months: ['Nov 2024', 'Dec 2024', 'Jan 2025', 'Feb 2025', 'Mar 2025', 'Apr 2025', 'May 2025', 'Jun 2025', 'Jul 2025', 'Aug 2025', 'Sep 2025', 'Oct 2025'],
+            mrr: [432.5, 445.2, 458.7, 472.1, 485.3, 487.5, 492.1, 498.5, 505.2, 512.8, 520.1, 487.5],
+            churnRate: [5.2, 5.0, 4.8, 4.6, 4.5, 4.3, 4.2, 4.1, 4.0, 4.1, 4.2, 4.2],
+            stickiness: [38.2, 38.9, 39.5, 40.1, 40.8, 41.2, 41.8, 42.1, 42.5, 42.8, 42.6, 42.3],
+            planMRR: {
+                labels: ['Starter', 'Professional', 'Enterprise'],
+                data: [125.3, 215.8, 146.4]
+            },
+            cacByChannel: {
+                labels: ['Organic', 'Paid Search', 'Social Media', 'Referral', 'Direct'],
+                data: [450, 1250, 980, 650, 320]
+            },
+            funnel: {
+                labels: ['Signups', 'Trial Active', 'Trial Completed', 'Paid Conversion'],
+                data: [2500, 1850, 1200, 340]
+            }
+        };
+
+        // Initialize Charts
+        function initCharts() {
+            // MRR Growth Chart
+            new Chart(document.getElementById('mrrChart'), {
+                type: 'line',
+                data: {
+                    labels: mockData.months,
+                    datasets: [{
+                        label: 'MRR ($K)',
+                        data: mockData.mrr,
+                        borderColor: primaryColor,
+                        backgroundColor: 'rgba(44, 90, 160, 0.05)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 5,
+                        pointBackgroundColor: primaryColor,
+                        pointBorderColor: 'white',
+                        pointBorderWidth: 2,
+                        pointHoverRadius: 7
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            labels: { font: { size: 12, weight: 600 }, color: accentColor }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            grid: { color: gridColor },
+                            ticks: { color: '#718096', font: { size: 11 } }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: '#718096', font: { size: 11 } }
+                        }
+                    }
+                }
+            });
+
+            // Churn Rate Chart
+            new Chart(document.getElementById('churnChart'), {
+                type: 'line',
+                data: {
+                    labels: mockData.months,
+                    datasets: [{
+                        label: 'Churn Rate (%)',
+                        data: mockData.churnRate,
+                        borderColor: '#e74c3c',
+                        backgroundColor: 'rgba(231, 76, 60, 0.05)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 5,
+                        pointBackgroundColor: '#e74c3c',
+                        pointBorderColor: 'white',
+                        pointBorderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            labels: { font: { size: 12, weight: 600 }, color: accentColor }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 6,
+                            grid: { color: gridColor },
+                            ticks: { color: '#718096', font: { size: 11 } }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: '#718096', font: { size: 11 } }
+                        }
+                    }
+                }
+            });
+
+            // Stickiness Chart
+            new Chart(document.getElementById('stickinessChart'), {
+                type: 'line',
+                data: {
+                    labels: mockData.months,
+                    datasets: [{
+                        label: 'DAU/MAU Ratio (%)',
+                        data: mockData.stickiness,
+                        borderColor: '#27ae60',
+                        backgroundColor: 'rgba(39, 174, 96, 0.05)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 5,
+                        pointBackgroundColor: '#27ae60',
+                        pointBorderColor: 'white',
+                        pointBorderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            labels: { font: { size: 12, weight: 600 }, color: accentColor }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            grid: { color: gridColor },
+                            ticks: { color: '#718096', font: { size: 11 } }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: '#718096', font: { size: 11 } }
+                        }
+                    }
+                }
+            });
+
+            // New MRR by Plan
+            new Chart(document.getElementById('planChart'), {
+                type: 'bar',
+                data: {
+                    labels: mockData.planMRR.labels,
+                    datasets: [{
+                        label: 'New MRR ($K)',
+                        data: mockData.planMRR.data,
+                        backgroundColor: [primaryColor, secondaryColor, '#90caf9'],
+                        borderRadius: 6,
+                        borderSkipped: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'x',
+                    plugins: {
+                        legend: {
+                            display: true,
+                            labels: { font: { size: 12, weight: 600 }, color: accentColor }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: gridColor },
+                            ticks: { color: '#718096', font: { size: 11 } }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: '#718096', font: { size: 11 } }
+                        }
+                    }
+                }
+            });
+
+            // CAC by Channel
+            new Chart(document.getElementById('cacChart'), {
+                type: 'bar',
+                data: {
+                    labels: mockData.cacByChannel.labels,
+                    datasets: [{
+                        label: 'CAC ($)',
+                        data: mockData.cacByChannel.data,
+                        backgroundColor: [primaryColor, secondaryColor, '#90caf9', '#64b5f6', '#42a5f5'],
+                        borderRadius: 6,
+                        borderSkipped: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'x',
+                    plugins: {
+                        legend: {
+                            display: true,
+                            labels: { font: { size: 12, weight: 600 }, color: accentColor }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: gridColor },
+                            ticks: { color: '#718096', font: { size: 11 } }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: '#718096', font: { size: 11 } }
+                        }
+                    }
+                }
+            });
+
+            // Conversion Funnel
+            new Chart(document.getElementById('funnelChart'), {
+                type: 'bar',
+                data: {
+                    labels: mockData.funnel.labels,
+                    datasets: [{
+                        label: 'Count',
+                        data: mockData.funnel.data,
+                        backgroundColor: [primaryColor, secondaryColor, '#90caf9', '#64b5f6'],
+                        borderRadius: 6,
+                        borderSkipped: false
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            labels: { font: { size: 12, weight: 600 }, color: accentColor }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            grid: { color: gridColor },
+                            ticks: { color: '#718096', font: { size: 11 } }
+                        },
+                        y: {
+                            grid: { display: false },
+                            ticks: { color: '#718096', font: { size: 11 } }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Update Dashboard
+        function updateDashboard() {
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            alert(`Dashboard updated for range: ${startDate} to ${endDate}`);
+            // In a real app, this would fetch new data from the backend
+        }
+
+        // Export CSV
+        function exportCSV() {
+            const csv = 'Metric,Value,Change\nMRR,$487.5K,+12.5%\nMRR Growth,12.5%,+2.1%\nConversion Rate,28.4%,+3.2%\nChurn Rate,4.2%,-0.8%\nCAC,$1250,+5.3%\nCLV,$42850,+8.7%\nStickiness,42.3%,+2.1%';
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'dashboard-export.csv';
+            a.click();
+        }
+
+        // Export PDF
+        function exportPDF() {
+            alert('PDF export functionality would integrate with a library like jsPDF or html2pdf in production.');
+            // In production: use html2pdf or similar library
+        }
+
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', initCharts);
+    </script>
+</body>
+</html>
